@@ -8,10 +8,11 @@ const DB = process.env.DATABASE.replace('<PASSWORD>', process.env.DATABASE_PASSW
 mongoose
 // .connect(process.env.DATABASE_LOCAL,{
 .connect(DB, {
-    userNewUrlParser: true,
+    useUnifiedTopology: true,
+    useNewUrlParser: true,
     useCreateIndex: true,
     useFindAndModify: false
-}).then(()=>  console.log("db connection success"));
+}).then(()=>  console.log("db connection success")).catch( (err) => console.log(err));
 
 // console.log(process.env);
 // console.log(app.get('env'));   // show the type of environment variable is devlopment or production
