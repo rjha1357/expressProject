@@ -1,5 +1,6 @@
 const mongoose = require('mongoose');
 const slugify  = require('slugify');
+const validator  = require('validator');
 
 const tourSchema = new mongoose.Schema(
   {
@@ -7,6 +8,10 @@ const tourSchema = new mongoose.Schema(
       type: String,
       required: [true, 'Please enter name'],
       trim: true,
+      maxlength: [30, 'A tour name must have less or equal to 30 characters'],
+      minlength: [10,'A tour name must have atleast 10 characters'],
+      // validate: validator.isAlpha,
+      // validate: [validator.isAlpha, 'Tour name must only contain characters'],
     },
     slug: String,
     rating: {
@@ -24,10 +29,16 @@ const tourSchema = new mongoose.Schema(
     difficulty: {
       type: String,
       required: [true, 'Please enter difficulty'],
+      enum: {
+        values: ['easy', 'medium', 'difficult'],
+        message: 'Difficulty is either: easy, medium or difficult'
+      }
     },
     ratingsAverage: {
       type: Number,
       default: 4.5,
+      min: [1, 'Rating must be above 1.0'],
+      max:  [5, 'Rating must be below 5.0'],
     },
     ratingsQuantity: {
       type: Number,
@@ -37,7 +48,17 @@ const tourSchema = new mongoose.Schema(
       type: Number,
       required: [true, 'A tour must have a price'],
     },
-    priceDiscount: Number,
+    // priceDiscount: Number,
+    priceDiscount: {
+      type: Number,
+      validate: {
+       validator: function(val){
+        // this only points to current doc on NEW document creation
+        return val < this.price;  // 250 < 200
+      },
+        message: 'Discount price ({VALUE}) should be below regular price'
+      }
+    },
     summary: {
       type: String,
       trim: true,
@@ -72,7 +93,7 @@ tourSchema.virtual('durationWeeks').get(function () {
   return this.durations / 7;
 }); // we cannot use durationWeeks in our query because it is not an part of database
 
-// DOCUMENT MIDDLEWARE: run before .save() and .create() but not on insertMany() 
+// DOCUMENT MIDDLEWARE: run before .save() and .create() but not on insertMany()  or on update
 //pre middleware , run before actual event like saving data to database. also called as pre saved hooks 
 tourSchema.pre('save', function(next){
     // console.log(this);  // this is the currently process document

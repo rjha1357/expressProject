@@ -5,6 +5,8 @@ const { json } = require('express/lib/response');
 const { request } = require('http');
 const morgan = require('morgan');
 
+const AppError = require('./utils/appError');
+const globalErrorhandler = require('./controllers/errorController');
 const tourRouter = require('./routes/tourRoutes');
 const userRouter = require('./routes/userRoutes');
 
@@ -26,10 +28,10 @@ app.use(express.static(`${__dirname}/public`));
  because the response cycle end on route only ( res.status(200).json({ ) here. 
     So if we want to use any middleware, call it before routes call.
 */
-app.use((req, res, next) =>{
-    console.log('Hello from the middleware');
-    next();
-});
+// app.use((req, res, next) =>{
+//     console.log('Hello from the middleware');
+//     next();
+// });
 
 app.use((req, res, next) => {
     req.requestTime = new Date().toISOString();
@@ -85,6 +87,24 @@ app.get('/', (req, res) => {
     // ROUTES
     app.use('/api/v1/tours', tourRouter);
     app.use('/api/v1/users', userRouter);
+
+    // route handler
+    app.all('*', (req, res, next) => {
+        // res.status(404).json({
+        //     status: 'fail',
+        //     message: `Can't find ${req.originalUrl} on this server`
+        // });
+
+        // const err = new Error(`Can't find ${req.originalUrl} on this server`);
+        // err.status = 'fail';
+        // err.statusCode = 404;
+
+        // next(err);
+
+        next(new AppError(`Can't find ${req.originalUrl} on this server!`, 404))
+    });
+
+    app.use(globalErrorhandler);
 
 module.exports = app;
 
